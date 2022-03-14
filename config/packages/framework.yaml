@@ -12,6 +12,7 @@ framework:
         cookie_samesite: lax
         storage_factory_id: session.storage.factory.native
 
+    serializer: { enable_annotations: true, circular_reference_handler: App\Common\Utils\CircularReferenceHandler }
     #esi: true
     #fragments: true
     php_errors:

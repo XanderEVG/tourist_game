@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres:${POSTGRES_VERSION:-13}-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: tourist_game
+      POSTGRES_PASSWORD: tourist_game_pass
+      POSTGRES_DB: tourist_game
+    ports:
+      - 5443:5432
+      
+volumes:
+  data01:
+    driver: local
+    
+
