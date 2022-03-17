@@ -23,9 +23,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../sassVariable/_variable.scss";
 .headline {
-    background-color: #eaebff7a;
+    background-color: #eaebffde;
     padding: 8px 0;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 100;
+    width: 100%;
 
     &__box {
         display: flex;
@@ -36,22 +42,23 @@ export default {
     &__title {
         font-family: "roboto head";
         font-size: 24px;
-        color: #3f3f3f;
+        color: $textColor;
         flex: 1 1 50%;
     }
 
     &__btn {
         background-color: #0000;
         padding: 8px 16px;
-        border: 2px solid #686868;
+        border: 2px solid $textColor;
         border-radius: 8px;
 
-        color: #686868;
+        color: $textColor;
         transition-duration: 0.3s;
 
         &:hover {
             color: #000;
             border: 2px solid #000;
+            background-color: rgba(0, 0, 0, 0.1);
         }
         &:active {
             background-color: rgba(0, 0, 0, 0.2);

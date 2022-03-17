@@ -16,7 +16,7 @@ export default {
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.4);
-
+    z-index: 11;
     display: flex;
     justify-content: center;
     align-items: center;
