@@ -33,7 +33,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @var string The hashed password
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", nullable=true)
      */
     private $password;
 
@@ -195,5 +195,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->fio = $fio;
 
         return $this;
+    }
+
+    public static function getEntityConstraints(): array
+    {
+        return [
+            'id' => [
+                new Assert\NotBlank(['message' => "ИД не должно быть пустым."]),
+                new Assert\Positive(['message' => "ИД должно быть положительным целым числом."])
+            ],
+            'username' => new Assert\Required([new Assert\NotBlank(), new Assert\Length(['max' => 255])]),
+            'fio' => new Assert\Required([new Assert\NotBlank(), new Assert\Length(['max' => 255])]),
+            'email' =>  new Assert\Optional([new Assert\Email(), new Assert\Length(['max' => 255])]),
+            'password' => new Assert\Length(['min' => 6, 'max' => 12]),
+            'roles' => [
+                new Assert\Type('array'),
+                new Assert\Count(['min' => 1]),
+            ],
+        ];
+    }
+
+    public static function getEntityAttributes(): array
+    {
+        return [
+            'attributes' => [
+                'id',
+                'username',
+                'fio',
+                'email',
+                'roles',
+            ]
+        ];
     }
 }

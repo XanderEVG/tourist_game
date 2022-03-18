@@ -8,7 +8,7 @@ use App\Entity\User;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Common\Auth\UserRoles;
 
-class AppFixtures extends Fixture
+class UserFixtures extends Fixture
 {
     private UserPasswordHasherInterface $passwordHasher;
 
@@ -18,6 +18,11 @@ class AppFixtures extends Fixture
     }
 
     public function load(ObjectManager $manager): void
+    {
+        $this->loadUsers($manager);
+    }
+
+    private function loadUsers(ObjectManager $manager)
     {
         $admin = new User();
         $admin->setUsername("admin");

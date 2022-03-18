@@ -2,34 +2,32 @@
 
 namespace App\Repository;
 
-use App\Entity\User;
+use App\Entity\Difficulty;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use App\Common\Repository\ExtendedFind\ColumnMapper;
 use App\Common\Repository\ExtendedFind\FindWithFilter;
 use App\Common\Repository\ExtendedFind\FindWithFilterAndSort;
 use App\Common\Repository\ExtendedFind\FindWithSort;
 
 /**
- * @method User|null find($id, $lockMode = null, $lockVersion = null)
- * @method User|null findOneBy(array $criteria, array $orderBy = null)
- * @method User[]    findAll()
- * @method User[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Difficulty|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Difficulty|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Difficulty[]    findAll()
+ * @method Difficulty[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface, FindWithFilterAndSort
+class DifficultyRepository extends ServiceEntityRepository implements FindWithFilterAndSort
 {
     use FindWithSort;
     use FindWithFilter;
-    private string $alias = 'u';
+
+    private string $alias = 'd';
 
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, User::class);
+        parent::__construct($registry, Difficulty::class);
     }
 
     private function columnMaps(): array
@@ -76,18 +74,19 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
         $queryBuilder = $this->createQueryBuilder($alias);
         $queryBuilder
-            ->delete(User::class, $alias)
+            ->delete(Difficulty::class, $alias)
             ->where($queryBuilder->expr()->in("$alias.id", ':ids'))
             ->setParameter('ids', $ids)
             ->getQuery()
             ->execute();
     }
 
+
     /**
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function add(User $entity, bool $flush = true): void
+    public function add(Difficulty $entity, bool $flush = true): void
     {
         $this->_em->persist($entity);
         if ($flush) {
@@ -99,7 +98,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function remove(User $entity, bool $flush = true): void
+    public function remove(Difficulty $entity, bool $flush = true): void
     {
         $this->_em->remove($entity);
         if ($flush) {
@@ -107,18 +106,5 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         }
     }
 
-    /**
-     * Used to upgrade (rehash) the user's password automatically over time.
-     */
-    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
-    {
-        if (!$user instanceof User) {
-            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
-        }
-
-        $user->setPassword($newHashedPassword);
-        $this->_em->persist($user);
-        $this->_em->flush();
-    }
     
 }

@@ -32,7 +32,11 @@ security:
 
     access_control:
         - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        # - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/users, roles: ROLE_ADMIN }
+        - { path: ^/api/difficulty, roles: ROLE_ADMIN }
+        - { path: ^/api/marker, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+
+
         # - { path: ^/profile, roles: ROLE_USER }
         # - { path: ^/api, roles: [ROLE_USER, ROLE_ADMIN], methods: [POST, DELETE] }
 
