@@ -1,52 +1,67 @@
 <template>
     <div class="map" id="map" style="width: 100%; height: 100vh"></div>
-    <Transition name="fade">
-        <div class="ballon" v-if="showBallon">
-            <div class="ballon__head">
-                <p class="ballon__title">{{ currentMarker.title }}</p>
-                <button class="ballon__close" @mousedown="showBallon = !showBallon">close</button>
-            </div>
-            <div class="ballon__Box">
-                <p class="ballon__subtitle">Сложность :</p>
-                <p class="ballon__text">{{ currentMarker.difficult }}</p>
-            </div>
-            <div class="ballon__description" v-if="currentMarker.desc">
-                {{ currentMarker.desc }}
-            </div>
-            <div class="ballon__fotoBox" v-if="currentMarker.imgSrc">
-                <img class="ballon__foto" :src="currentMarker.imgSrc" />
-            </div>
-            <div class="ballon__btnBox">
-                <button class="ballon__btn">Построить маршрут</button>
-                <button class="ballon__btn">В избранное</button>
-            </div>
-        </div>
-    </Transition>
-    <!-- название сложность описание фото кнопки("построить маршрут"-если получится и "в избранное")-->
+    <!-- <Transition name="fade">
+        <component :is="ballonIs" :marker="currentMarker" @closeBallon="closeBallonHandler" />
+    </Transition> -->
 </template>
 
 <script>
+//import MarkerBallon from "./MapBallon/MarkerBallon.vue";
+//import NewMarkerBallonForm from "./MapBallon/NewMarkerBallonForm.vue";
 export default {
     name: "Map",
 
+    components: {
+        /*MarkerBallon, NewMarkerBallonForm*/
+    },
+
     data() {
         return {
+            map: {},
             markers: [],
             currentMarker: {
-                id: null,
+                id: 0,
                 coords: [],
-                title: "",
-                difficult: "",
-                desc: "",
+                name: "",
+                difficulty: {
+                    id: null,
+                    name: "",
+                },
+                description: "",
                 imgSrc: "",
+                visited: false,
             },
-            showBallon: false,
+            // showBallon: false,
+            // showBallonNewMarker: false,
         };
     },
 
-    created() {
-        this.getMarkers();
+    //computed: {
+    //     ballonIs() {
+    //         if (this.showBallon) {
+    //             return "MarkerBallon";
+    //         } else if (this.showBallonNewMarker) {
+    //             return "NewMarkerBallonForm";
+    //         }
+    //     },
+    // },
+
+    watch: {
+        showBallonNewMarker(newVal) {
+            if (newVal === false) {
+                let markers = this.map.geoObjects;
+                let length = markers.getLength();
+                //console.log(markers.get(length - 1));
+                markers.remove(markers.get(length - 1));
+                // markers.add([57.203, 65.54]);
+            }
+        },
+    },
+
+    async created() {
+        await this.getMarkers();
         let that = this;
+
         ymaps.ready(() => {
             let map = new ymaps.Map("map", {
                 center: [57.153055, 65.534328],
@@ -70,56 +85,162 @@ export default {
             map.controls.remove("routeButtonControl");
             map.controls.remove("trafficControl");
             map.controls.remove("fullscreenControl");
-
             //создаю кнопку добавления метки
             let createMarkBtn = new ymaps.control.Button("<b>Добавить метку<b>");
-            createMarkBtn.events.add("select", (event) => {
+            createMarkBtn.events.add("select", () => {
+                map.cursors.push("crosshair");
+                //that.closeBallonHandler();
                 map.events.once("click", function (e) {
                     // Получение координат щелчка
                     let coords = e.get("coords");
+                    map.cursors.push("grab");
                     createMarkBtn.deselect();
                     console.log(coords);
+                    let newDot = new ymaps.Placemark(coords, { hintContent: "Новая метка" }, { preset: "islands#Icon", iconColor: "#d02828" });
+                    that.currentMarker = {
+                        id: 0,
+                        coords: [],
+                        name: "",
+                        difficulty: {
+                            id: null,
+                            name: "",
+                        },
+                        description: "",
+                        imgSrc: "",
+                        visited: false,
+                    };
+                    newDot.marker = that.currentMarker;
+
+                    map.geoObjects.add(newDot);
+                    map.setCenter(coords);
                 });
             });
 
             map.controls.add(createMarkBtn, { float: "left", maxWidth: 150 });
 
-            //создаю метки
-            that.markers.forEach((marker) => {
-                let dot = new ymaps.Placemark(marker.coords);
-                dot.marker = marker;
-                dot.events.add("click", function () {
-                    that.showBallon = true;
-                    that.currentMarker = dot.marker;
-                    map.panTo(marker.coords);
-                });
+            //создаю кластер
+            let clusterVisited = new ymaps.Clusterer();
+            let clusterUnVisited = new ymaps.Clusterer();
+            let markersForVisitedCluster = [];
+            let markersForUnVisitedCluster = [];
 
-                map.geoObjects.add(dot);
+            //создаю метки
+
+            that.markers.forEach((marker) => {
+                let dot;
+                if (marker.visited) {
+                    //если посещено
+                    dot = new ymaps.Placemark(
+                        marker.coords,
+                        {
+                            hintContent: marker.name,
+                            openBalloonOnClick: false,
+                            balloonContent: `
+                                <div class="ballon">
+                                    <div class="ballon__head">
+                                        <p class="ballon__title"> ${marker.name} <span>${marker.visited ? "(посещено)" : ""}</span></p>
+                                    </div>
+                                    <div class="ballon__Box">
+                                        <p class="ballon__subtitle">Сложность :</p>
+                                        <p class="ballon__text">${marker.difficulty.name}</p>
+                                    </div>
+                                    <div class="ballon__description">
+                                        ${marker.description}
+                                    </div>
+                                    <div class="ballon__fotoBox">
+                                        <img class="ballon__foto" src="${marker.imgSrc}" />
+                                    </div>
+                                    <div class="ballon__btnBox">
+                                        <button class="ballon__btn">Построить маршрут</button>
+                                        <button class="ballon__btn">В избранное</button>
+                                    </div>
+                                </div>`,
+                        },
+                        {
+                            preset: "islands#dotIcon",
+                            openBalloonOnClick: false,
+                            hideIconOnBalloonOpen: false,
+                        }
+                    );
+                    dot.marker = marker;
+                    markersForVisitedCluster.push(dot);
+                } else {
+                    //иначе
+                    dot = new ymaps.Placemark(
+                        marker.coords,
+                        {
+                            hintContent: marker.name,
+                            balloonContent: `
+                                <div class="ballon">
+                                    <div class="ballon__head">
+                                        <p class="ballon__title"> ${marker.name} <span>${marker.visited ? "(посещено)" : ""}</span></p>
+                                    </div>
+                                    <div class="ballon__Box">
+                                        <p class="ballon__subtitle">Сложность :</p>
+                                        <p class="ballon__text">${marker.difficulty.name}</p>
+                                    </div>
+                                    <div class="ballon__description">
+                                        ${marker.description}
+                                    </div>
+                                    <div class="ballon__fotoBox">
+                                        <img class="ballon__foto" src="${marker.imgSrc}" />
+                                    </div>
+                                    <div class="ballon__btnBox">
+                                        <button class="ballon__btn">Построить маршрут</button>
+                                        <button class="ballon__btn">В избранное</button>
+                                    </div>
+                                </div>`,
+                        },
+                        {
+                            preset: "islands#Icon",
+                            openBalloonOnClick: false,
+                            hideIconOnBalloonOpen: false,
+                        }
+                    );
+                    dot.marker = marker;
+                    markersForUnVisitedCluster.push(dot);
+                }
+                //событие клика на метку
+
+                dot.events.add("click", function (e) {
+                    // that.showBallon = true;
+                    // that.showBallonNewMarker = false;
+                    let target = e.get("target");
+                    openSideBallon(target.properties.get("balloonContent"));
+                    that.currentMarker = dot.marker;
+                    map.setCenter(dot.geometry.getCoordinates());
+                });
             });
+            clusterVisited.add(markersForVisitedCluster);
+            clusterUnVisited.add(markersForUnVisitedCluster);
+            map.geoObjects.add(clusterVisited);
+            map.geoObjects.add(clusterUnVisited);
+            that.map = map;
+
+            function openSideBallon(html) {
+                console.log(html);
+            }
         });
     },
 
     methods: {
         getMarkers() {
-            this.markers.push(
-                {
-                    id: 123,
-                    coords: [57.153055, 65.534328],
-                    title: "Город",
-                    difficult: "Легко",
-                    desc: "12312313",
-                    imgSrc: "https://via.placeholder.com/1820x980",
-                },
-                {
-                    id: 124,
-                    coords: [57.123, 65.534958],
-                    title: "Город",
-                    difficult: "Сложно",
-                    desc: "12312313",
-                    imgSrc: "https://via.placeholder.com/1820x980",
-                }
-            );
+            fetch("/api/marker")
+                .then((response) => response.json())
+                .then((res) => {
+                    res.data.forEach((el) => {
+                        el.coords = [];
+                        el.coords.push(el.latitude);
+                        el.coords.push(el.longitude);
+                        this.markers.push(el);
+                    });
+                });
         },
+
+        // closeBallonHandler() {
+        //     this.showBallon = false;
+        //     this.showBallonNewMarker = false;
+        // },
     },
 };
 </script>
@@ -133,6 +254,7 @@ export default {
 .ymaps-2-1-79-map-copyrights-promo {
     display: none;
 }
+
 .ballon {
     position: absolute;
     top: 20%;

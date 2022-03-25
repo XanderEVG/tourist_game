@@ -1,14 +1,12 @@
 <template>
     <div class="modalLogin">
-        <p class="modalLogin__title">Авторизация</p>
+        <p class="modalLogin__title">Регистрация</p>
         <div class="modalLogin__inputBox">
             <MainInput v-model:value="login" :preicon="'person'" class="modalLogin__input">Логин</MainInput>
             <MainInput v-model:value="password" :inputType="'password'" :preicon="'lock'" class="modalLogin__input">Пароль</MainInput>
         </div>
         <div class="modalLogin__btnBox">
-            <MainBtn primary>Войти</MainBtn>
-            <MainBtn secondary @onClick="$emit('clickRegBtn')">Регистрация</MainBtn>
-            <MainBtn texted>Забыли пароль?</MainBtn>
+            <MainBtn primary>Зарегистрироваться</MainBtn>
         </div>
 
         <p class="modalLogin__otherMethodTitle">Войти через соцсети</p>
